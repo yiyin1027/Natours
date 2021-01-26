@@ -14,6 +14,8 @@ mongoose.connect(DB, {
 }).then(con => {
   // console.log(con.connections);
   console.log("DB connection successful!");
+  deleteData();
+}).then(() => {
   importData();
 })
 
