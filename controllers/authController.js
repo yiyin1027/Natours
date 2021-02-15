@@ -83,8 +83,34 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   //GRANT ACCESS TO PRTECTED ROUTE
-
-  next();  
-
+  req.user = currentUser;
   next();
 })
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if(!roles.includes(req.user)){
+      return next(
+        new AppError('You do not have the permission to perform this action', 403)
+      );
+    }
+    next();
+  }
+}
+
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  //1 get user based on posted email
+  const user = await User.findOne({email: req.body.email})
+  if(!user) {
+    return next(new AppError('There is no user with the email address', 404))
+  }
+
+  //2 generate the randam reset token
+  const resetToken = user.createPasswordResetToken();
+  await user.save({validateBeforeSave: false}); 
+
+
+  //3 send it to user's email
+})
+
+exports.resetPassword = (req, res, next) => {}

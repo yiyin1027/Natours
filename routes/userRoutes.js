@@ -12,6 +12,9 @@ userRouter.param("id", (req, res, next, val) =>{
   next();
 })
 
+userRouter.post("/forgotPassword", authController.forgotPassword);
+userRouter.post("/resetPassword", authController.resetPassword);
+
 userRouter
   .route("/")
   .get(getAllUsers)
