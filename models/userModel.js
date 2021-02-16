@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema({
       }
     }
   },
-  passwordChangedAt: Date,
+  passwordChangedAt: String,
   PasswordResetToken: String,
   passwordResetExpires: Date
 });
@@ -61,10 +61,12 @@ userSchema.methods.correctPassword = async function(candidatePassword, userPassw
 userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
   if(this.passwordChangedAt){
     const changedTimestamp = parseInt(
-      this.passwordChangedAt.getTime() / 1000,
+      new Date((this.passwordChangedAt)).getTime() / 1000,
       10
     )
-    console.log(this.passwordChangedAt, JWTTimestamp);
+    console.log("LOGIN TIME: ", new Date(JWTTimestamp));
+    console.log(changedTimestamp, JWTTimestamp);
+    console.log(JWTTimestamp < changedTimestamp);
     return JWTTimestamp < changedTimestamp;
   }
 }

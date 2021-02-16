@@ -2,10 +2,11 @@ const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const jwt = require('jsonwebtoken');
 const AppError = require('../utils/appError');
+const {promisify} = require('util');
 
 const signToken = id => {
   return jwt.sign({id: id}, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN 
+    // expiresIn: process.env.JWT_EXPIRES_IN 
   })
 }
 
@@ -14,7 +15,12 @@ exports.signup = catchAsync(async (req, res, next) => {
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
-    passwordConfirm: req.body.passwordConfirm
+    passwordConfirm: req.body.passwordConfirm,
+    passwordChangedAt: req.body.passwordChangedAt,
+    role: req.body.role,
+    photo: req.body.photo,
+    PasswordResetToken: req.body.PasswordResetToken,
+    passwordResetExpires: req.body.passwordResetExpires
   })
 
   const token = signToken(newUser._id);
@@ -53,8 +59,10 @@ exports.login = catchAsync(async (req, res, next) => {
 
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
-  if(req.headers.authorizaiton && req.header.authorizaiton.startsWith('Bearer')){
-    token = req.headers.authorizaiton.split(' ')[1];
+
+  if(req.headers.authorization && req.headers.authorization.startsWith('Bearer')){
+    console.log("hei, this is working ")
+    token = req.headers.authorization.split(' ')[1];
   }
 
   console.log(token);
@@ -68,6 +76,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   //3. Check if user still exists
   const freshUser = await User.findById(decoded.id);
+
   if(!freshUser) {
     return next(
       new AppError(
@@ -76,20 +85,21 @@ exports.protect = catchAsync(async (req, res, next) => {
       )
     );
   }
-  
+    
   //4. Check if user changed password after the token was issued
   if (freshUser.changedPasswordAfter(decoded.iat)) {
     return next(new AppError('User recently changed password! Please log in again', 401));
   }
 
   //GRANT ACCESS TO PRTECTED ROUTE
-  req.user = currentUser;
+  req.user = freshUser;
   next();
 })
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    if(!roles.includes(req.user)){
+    // console.log(req.user);
+    if(!roles.includes(req.user.role)){
       return next(
         new AppError('You do not have the permission to perform this action', 403)
       );
